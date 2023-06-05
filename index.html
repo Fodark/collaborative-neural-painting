@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Controllable Neural Painting</title>
+  <!-- Bootstrap -->
+  <link href="css/bootstrap-4.4.1.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <!-- <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,800italic,400,700,800' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="css/project.css" media="screen" />
+    <link rel="stylesheet" type="text/css" media="screen" href="css/iconize.css" />
+    <script src="js/google-code-prettify/prettify.js"></script> -->
+</head>
+
+<!-- cover -->
+<section>
+  <div class="jumbotron text-center mt-0">
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <h1>Controllable Neural Painting</h1>
+          <h4 style="color:#5a6268;"></h4>
+          <hr>
+          <h6>
+            <a href="https://fodark.xyz" target="_blank">Nicola Dall'Asen</a><sup> 1,2</sup>,
+            <a href="https://www.willimenapace.com/" target="_blank">Willi Menapace</a><sup> 1</sup>,
+            <a href="https://helia95.github.io/" target="_blank">Elia Peruzzo</a><sup> 1</sup>,
+            <a href="https://scholar.google.com/citations?user=eJZlvlAAAAAJ&hl=it" target="_blank">Enver
+              Sangineto</a><sup> 3</sup>,
+            <a href="https://www.yimingwang.it/" target="_blank">Yiming Wang</a><sup> 4</sup>,
+            <a href="http://elisaricci.eu/" target="_blank">Elisa Ricci</a><sup> 1,4</sup>
+          </h6>
+          <p>
+            <sup>1</sup> University of Trento &nbsp;&nbsp;
+            <sup>2</sup> University of Pisa &nbsp;&nbsp;&nbsp;&nbsp;
+            <sup>3</sup> University of Modena e Reggio Emilia &nbsp;&nbsp;&nbsp;&nbsp;
+            <sup>4</sup> Fondazione Bruno Kessler &nbsp;&nbsp;&nbsp;&nbsp;
+          </p>
+
+          <div class="row justify-content-center">
+            <div class="column">
+              <p class="mb-5"><a class="btn btn-large btn-light" href="https://arxiv.org/abs/xxx.xxx" role="button"
+                  target="_blank">
+                  <i class="fa fa-folder-open"></i> Paper</a> </p>
+            </div>
+            <div class="column">
+              <p class="mb-5"><a class="btn btn-large btn-light" href="https://github.com" role="button"
+                  target="_blank">
+                  <i class="fa fa-github-alt"></i> Code (Coming Soon) </a> </p>
+            </div>
+            <div class="column">
+              <p class="mb-5"><a class="btn btn-large btn-light" href="" role="button" target="_blank">
+                  <i class="fa fa-database"></i> Model & Dataset (Coming Soon)</a> </p>
+            </div>
+            <div class="column">
+              <p class="mb-5"><a class="btn btn-large btn-light" href="" role="button" target="_blank">
+                  <i class="fa fa-gamepad"></i> Demo (Coming Soon)</a> </p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- abstract -->
+<section>
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center">
+        <h3>Abstract</h3>
+        <hr style="margin-top:0px">
+
+        <!--            <div align="center"> For an unseen objects, we can simply take. </div>-->
+
+        <div class="row" style="margin-bottom:5px">
+          <div class="col" style="text-align:center">
+            <img class="thumbnail" src="image/teaser.png" style="width:100%; margin-bottom:20px">
+          </div>
+
+          <h6 style="color:#8899a5"> The proposed Collaborative Neural Painting task envisions a collaborative procedure
+            in which users produce and
+            compose artworks iteratively interacting with a Neural Painter. This interaction includes auto-painting
+            without user input,
+            and assistive painting/editing at any granularity level. We solve this generation task using a vectorized
+            stroke parametrization
+            whose joint distribution is learned using diffusion models. </h6>
+
+        </div>
+        <br>
+
+        <p class="text-left">
+          The process of painting fosters creativity and rational planning. However, existing generative AI mostly
+          focuses on producing visually pleasant artworks, without emphasizing the painting process. We introduce a
+          novel task, Collaborative Neural Painting (CNP), to facilitate collaborative art painting generation between
+          humans and machines. Given any number of user-input brushstrokes as the context or just the desired object
+          class, CNP should produce a sequence of strokes supporting the completion of a coherent painting. Importantly,
+          the process can be gradual and iterative, so allowing users' modifications at any phase until the completion.
+          Moreover, we propose to solve this task using a painting representation based on a sequence of parametrized
+          strokes, which makes it easy both editing and composition operations. These parametrized strokes are processed
+          by a Transformer-based architecture with a novel attention mechanism to model the relationship between the
+          input strokes and the strokes to complete. We also propose a new masking scheme to reflect the interactive
+          nature of CNP and adopt diffusion models as the basic learning process for its effectiveness and diversity in
+          the generative field. Finally, to develop and validate methods on the novel task, we introduce a new dataset
+          of painted objects and an evaluation protocol to benchmark CNP both quantitatively and qualitatively. We
+          demonstrate the effectiveness of our approach and the potential of the CNP task as a promising avenue for
+          future research.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+<br>
+
+<section>
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center">
+        <h2>Method</h2>
+        <hr style="margin-top:0px">
+        <div class="col" style="text-align:center">
+          <img class="thumbnail" src="image/method.png" style="width:100%; margin-bottom:20px">
+        </div>
+        <p class="text-center">
+          Given an input sequence s, the Interaction-Aware Masking block divides the sequence in two, a conditioning
+          sequence
+          s<sup>ctx</sup> which acts as context to denoise the missing strokes s<sup>p</sup> that, using a diffusion
+          framework, are noised
+          to s<sup>p</sup><sub>t</sub>. Our Position-
+          aware Attention Bias modifies the attention scores of our Transformer based on the Euclidean distance between
+          the conditioning
+          and noised strokes.
+        </p>
+        <!-- <p class="text-left">
+          [1] Pixelwise view selection for unstructured multi-view stereo. ECCV 2016. <br>
+          [2] NeuS: Learning neural implicit surfaces by volume rendering for multi-view reconstruction. NeurIPS 2021.
+          <br>
+          [3] Ref-NeRF: Structured view-dependent appearance for neural radiance fields. CVPR 2022. <br>
+          [4] Shape, Light, and Material Decomposition from Images using Monte Carlo Rendering and Denoising. NeurIPS
+          2022. <br>
+        </p> -->
+      </div>
+    </div>
+  </div>
+</section>
+<br>
+
+<section>
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center">
+        <h2>Video Demo</h2>
+        <hr style="margin-top:0px">
+        <video width="90%" playsinline="" controls loop="loop" preload="" muted="">
+          <source src="video/acmdemo_clean.mp4">
+        </video>
+
+        <p class="text-left">
+
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+<br>
+
+<!-- <section>
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center">
+        <h2>Comparison on Relighting</h2>
+        <hr style="margin-top:0px">
+        <video width="80%" playsinline="" autoplay="autoplay" loop="loop" preload="" muted="">
+          <source src="video/relight_compare_compressed.mp4" type="video/mp4">
+        </video>
+
+        <p class="text-center">
+          In comparison with: MII [1] NeILF [2] NvDiffRecMC [3]
+        </p>
+        <p class="text-left">
+          [1] Modeling Indirect Illumination for Inverse Rendering. CVPR 2022. <br>
+          [2] NeiLF: Neural incident light field for physically-based material estimation. ECCV 2022. <br>
+          [3] Shape, Light, and Material Decomposition from Images using Monte Carlo Rendering and Denoising. NeurIPS
+          2022. <br>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+<br> -->
+<!--  <section>-->
+<!--    <div class="container">-->
+<!--      <div class="row">-->
+<!--        <div class="col-12 text-center">-->
+<!--            <h2>Results with 10k per-scene training steps (~40min)</h2>-->
+<!--            <hr style="margin-top:0px">-->
+<!--            <video width="100%" playsinline="" autoplay="autoplay" loop="loop" preload="" muted="">-->
+<!--                <source src="video/nerf_syn_ft_comparison.mp4" type="video/mp4">-->
+<!--            </video>-->
+<!--            <video width="100%" playsinline="" autoplay="autoplay" loop="loop" preload="" muted="">-->
+<!--                <source src="video/nerf_syn_ft.mp4" type="video/mp4">-->
+<!--            </video>-->
+<!--            <video width="100%" playsinline="" autoplay="autoplay" loop="loop" preload="" muted="">-->
+<!--                <source src="video/dtu_ft.mp4" type="video/mp4">-->
+<!--            </video>-->
+<!--        </div>-->
+<!--      </div>-->
+<!--    </div>-->
+<!--  </section>-->
+<!--  <br>-->
+
+<!-- <section>
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center">
+        <h2>More Shape Reconstruction</h2>
+        <hr style="margin-top:0px">
+        <video width="80%" playsinline="" autoplay="autoplay" loop="loop" preload="" muted="">
+          <source src="video/geom_results_compressed.mp4" type="video/mp4">
+        </video>
+
+        <p class="text-left">
+
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+<br>
+
+<section>
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center">
+        <h2>More Relighting</h2>
+        <hr style="margin-top:0px">
+        <video width="80%" playsinline="" autoplay="autoplay" loop="loop" preload="" muted="">
+          <source src="video/relight_results_compressed.mp4" type="video/mp4">
+        </video>
+
+        <p class="text-left">
+
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+<br> -->
+
+<!-- citing -->
+<div class="container">
+  <div class="row ">
+    <div class="col-12">
+      <h3>Citation</h3>
+      <hr style="margin-top:0px">
+      <pre style="background-color: #e9eeef;padding: 1.25em 1.5em">
+<code>@inproceedings{dallasen2023cnp,
+  title={Controllable Neural Painting},
+  author={Dall'Asen, Nicola and Menapace, Willi and Peruzzo, Elia and Sangineto, Enver and Wang, Yiming and Ricci, Elisa},
+  year={2023}
+}</code></pre>
+      <hr>
+    </div>
+  </div>
+</div>
+
+<!-- <footer class="text-center" style="margin-bottom:10px">
+  Thanks to <a href="https://lioryariv.github.io/" target="_blank">Lior Yariv</a> for the website template.
+</footer> -->
+
+</body>
+
+</html>

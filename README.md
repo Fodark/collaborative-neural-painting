@@ -1,5 +1,3 @@
-# Collaborative Neural Painting
+Collaborative Neural Painting
 
 ---
-
-Coming soon
