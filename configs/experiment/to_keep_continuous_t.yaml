@@ -1,0 +1,56 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=ablation/small
+
+defaults:
+  - override /datamodule: awesome_animals.yaml
+  - override /model: continuous.yaml
+  - override /callbacks: without_es.yaml
+  - override /trainer: gpu.yaml
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+# awesome-ducks-no-order
+
+seed: 42
+m_epochs: 1000
+num_classes: 10
+warmup_epochs: 50
+
+max_seq_len: 180
+
+max_levels_length: [ 9, 45, 126 ]
+max_levels_length_cumsum: [ 9, 54, 180 ]
+
+scale: 4.
+batch_size: 128
+exp_name: ""
+
+trainer:
+  min_epochs: 1
+  max_epochs: ${m_epochs}
+  gradient_clip_val: 1.0
+  check_val_every_n_epoch: 100
+  log_every_n_steps: 20
+  devices: auto
+
+model:
+  scale: ${scale}
+
+datamodule:
+  batch_size: ${batch_size}
+  max_levels_length: ${max_levels_length}
+  classes: null # [ "Duck" ] # , "Rabbit", "Cat"]
+  scale: ${scale}
+
+tags: [ "small", "continuous" ]
+
+logger:
+  wandb:
+    project: "diffusion-neural-painting-test"
+    tags: ${tags}
+    group: "diffusion"
+    entity: "ndallasen"
+    name: ${exp_name}

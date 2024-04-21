@@ -1,0 +1,34 @@
+# @package _global_
+
+defaults:
+  - _self_
+  - datamodule: awesome_animals
+  - model: dit
+  - logger: wandb
+  - callbacks: without_es
+  - trainer: gpu.yaml
+  - paths: default.yaml
+  - extras: default.yaml
+  - hydra: default.yaml
+  - experiment: null
+
+
+seed: 42
+max_seq_len: 180
+learn_sigma: false
+num_classes: 10
+m_epochs: 2000
+warmup_epochs: 50
+
+max_levels_length: [ 9, 45, 126 ]
+max_levels_length_cumsum: [ 9, 54, 180 ]
+
+scale: 4.
+batch_size: 128
+
+task_name: "eval"
+
+tags: [ "dev" ]
+
+# passing checkpoint path is necessary for evaluation
+ckpt_path: ???

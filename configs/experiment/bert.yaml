@@ -1,0 +1,53 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=bert
+
+defaults:
+  - override /datamodule: awesome_animals_quantized.yaml
+  - override /model: maskgit.yaml
+  - override /callbacks: without_es.yaml
+  - override /trainer: gpu.yaml
+
+seed: 42
+m_epochs: 250
+num_classes: 10
+warmup_epochs: 40
+
+max_seq_len: 1440
+max_tokens: 256
+
+max_levels_length: [ 9, 45, 126 ]
+max_levels_length_cumsum: [ 9, 54, 180 ]
+
+batch_size: 64
+exp_name: ""
+
+trainer:
+  min_epochs: 1
+  max_epochs: ${m_epochs}
+  gradient_clip_val: 1.0
+  check_val_every_n_epoch: 150
+  log_every_n_steps: 20
+  devices: auto
+  precision: 16
+
+model:
+  max_levels_length: ${max_levels_length}
+  val_path: data/cnp/awesome-animals-complete/rendered
+  T: 1
+
+datamodule:
+  batch_size: ${batch_size}
+  num_workers: 32
+  max_levels_length: ${max_levels_length}
+  classes: null
+
+tags: [ "bert" ]
+
+logger:
+  wandb:
+    project: "cnp"
+    tags: ${tags}
+    group: "bert"
+    name: ${exp_name}

@@ -1,0 +1,9 @@
+defaults:
+  - default.yaml
+
+accelerator: gpu
+num_nodes: 1
+devices: auto
+strategy: ddp_find_unused_parameters_false
+# benchmark: true
+num_sanity_val_steps: 1

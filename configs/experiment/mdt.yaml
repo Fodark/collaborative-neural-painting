@@ -1,0 +1,68 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=mdt
+
+defaults:
+  - override /datamodule: awesome_animals.yaml
+  - override /model: dit.yaml
+  - override /callbacks: without_es.yaml
+  - override /trainer: gpu.yaml
+
+seed: 42
+max_seq_len: 450
+num_classes: 10
+m_epochs: 250
+warmup_epochs: 40
+
+max_levels_length: [ 9, 45, 126, 270 ]
+max_levels_length_cumsum: [ 9, 54, 180, 450 ]
+
+scale: 4.
+batch_size: 64
+exp_name: ""
+
+trainer:
+  min_epochs: 1
+  max_epochs: ${m_epochs}
+  gradient_clip_val: 10.0
+  check_val_every_n_epoch: 50
+  log_every_n_steps: 20
+  num_sanity_val_steps: 0
+  check_val_every_n_epoch: 100
+  limit_val_batches: 0.02
+  limit_test_batches: 0.02
+  precision: 16
+
+model:
+  _target_: src.models.unified_module_torchmetrics.DiffusionModule
+  max_levels_length: ${max_levels_length_cumsum}
+  scale: ${scale}
+  max_seq_len: ${max_seq_len}
+  batch_size: ${batch_size}
+  compile_network: false
+  val_path: data/cnp/awesome-animals-complete/rendered
+  net:
+    depth: 12
+    hidden_size: 768
+    num_heads: 12
+    num_classes: ${num_classes}
+    max_seq_len: ${max_seq_len}
+    with_distance_attention: true
+    triple_cfg: true
+
+datamodule:
+  batch_size: ${batch_size}
+  max_levels_length: ${max_levels_length}
+  classes: null
+  scale: ${scale}
+  num_workers: 32
+
+tags: [ "large", "diffusion" ]
+
+logger:
+  wandb:
+    project: "cnp"
+    tags: ${tags}
+    group: "diffusion"
+    name: ${exp_name}

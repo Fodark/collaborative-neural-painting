@@ -1,0 +1,32 @@
+_target_: src.models.unified_module.DiffusionModule
+lr: 1e-4
+val_path: data/cnp/rendered
+compute_statistics: true
+optimizer:
+  _target_: torch.optim.Adam
+  _partial_: true
+  # optim_bits: 8
+scheduler:
+  _target_: src.models.components.lr_scheduler.LinearWarmupCosineAnnealingLR
+  _partial_: true
+  warmup_epochs: ${warmup_epochs}
+  max_epochs: ${m_epochs}
+  warmup_start_lr: 1e-8
+net:
+  _target_: src.models.components.dit.DiT
+  depth: 12
+  hidden_size: 384
+  num_heads: 6
+  use_fourier: false
+  with_skips: false
+  with_confidence: false
+  with_rel_pos: true
+  is_cld: false
+
+renderer:
+  _target_: src.models.components.snp.renderer.Renderer
+  canvas_size: [ 256, 256 ]
+
+diffusion:
+  _target_: src.models.components.simple_diffusion.GaussianDiffusion
+  num_sample_steps: 1000

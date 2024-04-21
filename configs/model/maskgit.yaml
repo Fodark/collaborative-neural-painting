@@ -1,0 +1,28 @@
+_target_: src.models.maskgit.MaskGitModule
+lr: 1e-4
+val_path: data/cnp/rendered
+max_tokens: ${max_tokens}
+compute_statistics: true
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  # optim_bits: 8
+scheduler:
+  _target_: pl_bolts.optimizers.lr_scheduler.LinearWarmupCosineAnnealingLR
+  _partial_: true
+  warmup_epochs: ${warmup_epochs}
+  max_epochs: ${m_epochs}
+  warmup_start_lr: 1e-5
+  eta_min: 1e-8
+net:
+  _target_: src.models.components.bidirectional_transformer.BidirectionalTransformer
+  hidden_size: 144
+  n_layers: 6
+  num_heads: 6
+  num_classes: ${num_classes}
+  max_tokens: ${max_tokens}
+  max_seq_len: ${max_seq_len}
+
+renderer:
+  _target_: src.models.components.snp.renderer.Renderer
+  canvas_size: [ 256, 256 ]

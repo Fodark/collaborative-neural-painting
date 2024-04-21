@@ -1,0 +1,7 @@
+# https://pytorch-lightning.readthedocs.io/en/latest/api/pytorch_lightning.callbacks.EarlyStopping.html
+
+# Monitor a metric and stop training when it stops improving.
+# Look at the above link for more detailed information.
+ema:
+  _target_: src.models.components.ema.EMA
+  decay: 0.999

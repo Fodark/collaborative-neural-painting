@@ -1,0 +1,7 @@
+_target_: src.datamodules.unified_datamodule_organized.StrokesDatamodule
+datasets_root: data/cnp
+dataset: awesome-animals-complete
+augment: false
+batch_size: 64
+num_workers: 0
+pin_memory: false

@@ -1,0 +1,27 @@
+_target_: src.models.continuous_t.ContinuousModule
+lr: 1e-4
+val_path: data/cnp/rendered
+compute_statistics: true
+max_levels_length: ${max_levels_length}
+optimizer:
+  _target_: torch.optim.AdamW
+  _partial_: true
+  # optim_bits: 8
+scheduler:
+  _target_: pl_bolts.optimizers.lr_scheduler.LinearWarmupCosineAnnealingLR
+  _partial_: true
+  warmup_epochs: ${warmup_epochs}
+  max_epochs: ${m_epochs}
+  warmup_start_lr: 1e-5
+  eta_min: 1e-8
+net:
+  _target_: src.models.components.continuous_dit.CDiT
+  hidden_size: 768
+  depth: 12
+  num_heads: 12
+  num_classes: ${num_classes}
+  max_seq_len: ${max_seq_len}
+
+renderer:
+  _target_: src.models.components.snp.renderer.Renderer
+  canvas_size: [ 256, 256 ]
