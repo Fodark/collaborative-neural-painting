@@ -381,7 +381,6 @@ class DiffusionModule(LightningModule):
         Returns:
 
         """
-        # FRACEEEE
         self.compute_fid_stats_validation_set()
         try:
             if self.compile_network:
@@ -413,7 +412,6 @@ class DiffusionModule(LightningModule):
 
     def step(self, batch: Any):
         x, y, levels_masks = batch["data"], batch["class_idx"], batch["levels_masks"]
-        # compute mean, std, min and max of x and built a dict of these stats
         x, ctx, mask, extra_cond = self.generate_context(x, self.max_levels_length)
 
         loss_dict, confidence = self(x, ctx, y, mask, extra_cond=extra_cond)
@@ -448,7 +446,6 @@ class DiffusionModule(LightningModule):
         self.log_values("val", loss_dict)
         loss = sum(loss_dict.values())
 
-        # if batch_idx < 5:
         if self.trainer.is_global_zero:
             log.info(f"[VAL] batch_idx: {batch_idx}, infilling")
         self.real_strokes, self.class_ = batch["data"], batch["class_idx"]
@@ -461,14 +458,12 @@ class DiffusionModule(LightningModule):
 
         return metrics
 
-        # return {"loss": loss}
 
     def validation_epoch_end(self, outputs: List[Any]):
         self.diffusion.set_fn(self.net)
         self.log_image(f"val/real", [self.real_images[0]])
         for i, _ in enumerate(self.modes):
             generated = self.pred_images[i]
-            # for i, generated in enumerate(self.pred_images):
             ctx_with_class = self.add_class_to_images(
                 self.ctx_images[i][-self.eval_bs:], self.class_[-self.eval_bs:]
             )
@@ -509,10 +504,8 @@ class DiffusionModule(LightningModule):
 
     def test_step(self, batch: Any, batch_idx: int):
         loss_dict = self.step(batch)
-        # self.log_values("test", loss_dict)
         loss = sum(loss_dict.values())
 
-        # if batch_idx < 5:
         if self.trainer.is_global_zero:
             log.info(f"[TEST] batch_idx: {batch_idx}, infilling")
         self.real_strokes, self.class_ = batch["data"], batch["class_idx"]
@@ -545,7 +538,6 @@ class DiffusionModule(LightningModule):
                 generated[-self.eval_bs:], self.class_[-self.eval_bs:]
             )
             self.log_image(f"test/fake/{name}", [make_grid(fake_with_class)])
-            # self.log_image(f"test/fake/{self.modes[i]}", [make_grid(generated[: self.eval_bs])])
 
         # compute the mean of the metrics
         metrics = {}
@@ -556,10 +548,6 @@ class DiffusionModule(LightningModule):
             self.update_fid_generated(self.pred_images[idx])
             fid_value = self.compute_fid("test", mode)
             metrics[f"fid/{mode}"] = fid_value
-
-        # self.update_fid_generated(self.pred_images[-1])
-        # fid_value = self.compute_fid("test", "progressive")
-        # metrics[f"fid/progressive"] = fid_value
 
         self.log_values("test", metrics)
 
@@ -649,7 +637,6 @@ class DiffusionModule(LightningModule):
             for o in unnormalized_ctx
         ]
         self.ctx_images[idx].extend(rendered_ctx)
-        # self.ctx_images.append(self.render_strokes(unnormalized_ctx, class_))
 
         ### INFILLING METRICS
         # keep track of the infilling metrics
@@ -668,7 +655,6 @@ class DiffusionModule(LightningModule):
         infilling_metrics = {
             k: v / unnormalized_fake.shape[0] for k, v in infilling_metrics.items()
         }
-        # self.log_values(stage, infilling_metrics)
 
         ### RENDERING METRICS
         fake_normalized = torch.where(presence[:, :, None], unnormalized_fake, unnormalized_ctx)
@@ -700,10 +686,8 @@ class DiffusionModule(LightningModule):
         image_metrics = {
             f"image_l2/{mode}": image_distance,
         }
-        # self.log_values(stage, image_metrics)
 
         metrics = {**infilling_metrics, **image_metrics, **metrics}
-        # self.log_values(stage, metrics)
 
         return metrics
 
@@ -756,7 +740,6 @@ class DiffusionModule(LightningModule):
                 metrics_p = self.complete_with_method(real, class_, idx, "random", stage, sampling_fn, p)
                 # update the metrics
                 metrics = {**metrics, **{k: metrics.get(k, 0) + v for k, v in metrics_p.items()}}
-                # metrics = {k: metrics.get(k, 0) + v for k, v in metrics_p.items()}
             return metrics
 
         if self.unconditional_only:
@@ -765,7 +748,6 @@ class DiffusionModule(LightningModule):
             metrics_unconditional = self.complete_with_method(real, class_, 0, "unconditional", stage, sampling_fn)
             # update the metrics
             metrics = {**metrics, **{k: metrics.get(k, 0) + v for k, v in metrics_unconditional.items()}}
-            # metrics = {k: metrics.get(k, 0) + v for k, v in metrics_unconditional.items()}
             return metrics
 
         for idx, mode in enumerate(self.modes):
@@ -774,405 +756,8 @@ class DiffusionModule(LightningModule):
             metrics_mode = self.complete_with_method(real, class_, idx, mode, stage, sampling_fn)
             # update the metrics
             metrics = {**metrics, **{k: metrics.get(k, 0) + v for k, v in metrics_mode.items()}}
-            # metrics = {k: metrics.get(k, 0) + v for k, v in metrics_mode.items()}
 
         return metrics
-
-    def predict_dataloader(self):
-        # root_folder = "/data/shared/ndallasen/datasets/inp/awesome-animals-complete/val/"
-        root_folder = "/nfs/data_lambda/ndallase/datasets/inp/awesome-animals-complete/val/"
-        data = []
-
-        max_items = 100
-        max_items_per_class = max_items // 10
-        total_items = 0
-
-        # classes_ = ['Rabbit', 'Horse', 'Bird', 'Eagle', 'Wolf', 'Dog', 'Duck', 'Tiger', 'Cat', 'Squirrel']
-        classes_ = ['Rabbit', 'Cat', 'Tiger', 'Duck', 'Squirrel', 'Horse', 'Bird', 'Eagle', 'Dog', 'Wolf']
-
-        for idx, class_ in enumerate(classes_):
-            if total_items >= max_items:
-                break
-            # k_per_class = 0
-            file_list = os.listdir(os.path.join(root_folder, class_))
-            # pick k_per_class files from each class
-            random.shuffle(file_list)
-            picked_files = file_list[:max_items_per_class]
-
-            for file in picked_files:
-                # if k_per_class >= max_items_per_class:
-                #     break
-                file_path = os.path.join(root_folder, class_, file)
-                strokes = torch.load(file_path, map_location="cpu").clamp(0, 1)
-                # strokes = strokes * self.scale - self.scale // 2
-                data.append( (strokes, torch.tensor(idx), file_path) )
-                # k_per_class += 1
-                total_items += 1
-                # print(data[-1])
-        print(f"Loaded {len(data)} samples for prediction")
-        return [data]
-
-    def load_datapoint(self, batch):
-        big_renderer = Renderer((720, 720), half_precision=False, morphology=True)
-        classes_ = ['Rabbit', 'Horse', 'Bird', 'Eagle', 'Wolf', 'Dog', 'Duck', 'Tiger', 'Cat', 'Squirrel']
-        root = "/nfs/data_lambda/ndallase/datasets/inp"
-        metadata_path = os.path.join(root, "metadata", "awesome-animals-complete.json")
-        with open(metadata_path, "r") as f:
-            self.metadata = json.load(f)
-        """Called for each batch in the dataloader."""
-        # log.info(f"predict_step: {batch.shape}")
-        # print(batch)
-        # return
-        strokes, class_idx, file_path = batch
-        # file_path = "/data/shared/ndallasen/datasets/inp/awesome-animals-complete/val/Duck/seg_5694.pt"
-        my_little_duck = torch.load(file_path,
-                                    map_location="cpu")
-        file_name: str = file_path.split("/")[-1]
-        file_basename: str = file_name.split(".")[0]
-
-        levels_length: List[int] = self.metadata[file_basename]
-        # log.info(f"duck: {my_little_duck.shape}, levels: {levels_length}, max: {self.max_levels_length}")
-
-        padded_levels = []
-
-        for idx, max_levels_length_cum in enumerate(self.max_levels_length):
-            max_level_length = max_levels_length_cum - self.max_levels_length[
-                idx - 1] if idx > 0 else max_levels_length_cum
-            current_level_length = levels_length[idx] - levels_length[idx - 1] if idx > 0 else levels_length[idx]
-            current_level_strokes = my_little_duck[(levels_length[idx - 1] if idx > 0 else 0):levels_length[idx]]
-            if max_level_length > current_level_length:
-                # log.info(f"max_levels_length: {max_level_length}, levels_length: {current_level_length}")
-                if len(current_level_strokes.shape) == 1:
-                    current_level_strokes = current_level_strokes.unsqueeze(0)
-                padded_level = torch.cat(
-                    [current_level_strokes, torch.zeros(
-                        (max_level_length - current_level_length, 8))])
-                padded_levels.append(padded_level)
-            else:
-                padded_levels.append(current_level_strokes)
-
-        my_little_datapoint = torch.cat(padded_levels).unsqueeze(0).to(self.device).half()
-        my_little_datapoint = (my_little_datapoint * self.scale) - self.scale // 2
-        class_ = torch.tensor([class_idx]).unsqueeze(0).to(self.device)
-
-        return big_renderer, my_little_datapoint, class_, file_basename
-
-    def predict_step(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        self.diffusion.set_fn(self.net.forward_with_cfg)
-        print("predict_step_random")
-        self.predict_step_random(batch, batch_idx, dataloader_idx)
-        print("predict_step_multiple_completions")
-        self.predict_step_multiple_completions(batch, batch_idx, dataloader_idx)
-        print("predict_step_no_class")
-        self.predict_step_no_class(batch, batch_idx, dataloader_idx)
-        print("predict_step_lots")
-        self.predict_step_lots(batch, batch_idx, dataloader_idx)
-        print("predict_step_noising")
-        self.predict_step_noising_viz(batch, batch_idx, dataloader_idx)
-
-    def predict_step_random(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        # ctx_out_root = "/data/shared/ndallasen/datasets/inp/awesome-animals-complete/teaser-ctx/"
-        pred_out_root = "supp_mat/random"
-        # os.makedirs(ctx_out_root, exist_ok=True)
-        os.makedirs(pred_out_root, exist_ok=True)
-
-        big_renderer, my_little_datapoint, class_, file_basename = self.load_datapoint(batch)
-
-        sampling_fn = self.diffusion.available_samplers()[0]
-
-        ctxs = []
-        class_ = class_.repeat(4, 1)
-        presences = []
-        xs = []
-
-        for mode_ in [0.2, 0.4, 0.6, 0.8]:
-            # x, ctx, presence, extra_cond = self.generate_context(my_little_datapoint, self.max_levels_length, "val", mode_, deterministic=True)
-            presence: torch.Tensor = torch.rand_like(my_little_datapoint[..., 0]) > mode_
-
-            x = my_little_datapoint.clone()
-            x = torch.where(presence[..., None], x, torch.randn_like(x))
-            ctx = my_little_datapoint.clone()
-            ctx = torch.where(presence[..., None], torch.zeros_like(ctx), ctx)
-            extra_cond = None
-
-            ctxs.append(ctx)
-            presences.append(presence)
-            xs.append(x)
-
-        ctxs = torch.cat(ctxs)
-        presences = torch.cat(presences)
-        x = torch.cat(xs)
-
-        fake, confidence = sampling_fn(ctxs, class_, presences, x=x, extra_cond=extra_cond)
-        fake = self.unnormalize(fake)
-
-        fakes = []
-        ctxs__ = []
-        for i in range(4):
-            fake_ = fake[i].clone()
-            fake_ = torch.where(presences[i][..., None], fake_, self.unnormalize(ctxs[i]))
-            fakes.append(fake_)
-
-            ctx_ = ctxs[i].clone()
-            ctx_ = self.unnormalize(ctx_)
-            ctx_ = torch.where(presences[i][..., None], torch.zeros_like(ctx_), ctx_)
-            ctxs__.append(ctx_)
-        rendered_fake = [big_renderer.draw_on_canvas(fakes[i].unsqueeze(0) + 1e-3, "white", False).squeeze() for i in range(4)]
-        rendered_ctx = [big_renderer.draw_on_canvas(ctxs__[i].unsqueeze(0) + 1e-3, "white", False).squeeze() for i in range(4)]
-
-        for i, mode_ in enumerate([0.2, 0.4, 0.6, 0.8]):
-            save_image([rendered_ctx[i], rendered_fake[i]], os.path.join(pred_out_root, f"{file_basename}_{mode_}.png"))
-
-        return None
-
-
-    def predict_step_multiple_completions(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        # ctx_out_root = "/data/shared/ndallasen/datasets/inp/awesome-animals-complete/teaser-ctx/"
-        pred_out_root = "supp_mat/multiple_completions"
-        # os.makedirs(ctx_out_root, exist_ok=True)
-        os.makedirs(pred_out_root, exist_ok=True)
-
-
-        big_renderer, my_little_datapoint, class_, file_basename = self.load_datapoint(batch)
-
-        sampling_fn = self.diffusion.available_samplers()[0]
-
-        n_completions = 5
-
-        ctxs = []
-        class_ = class_.repeat(n_completions, 1)
-        presences = []
-        xs = []
-
-        # for mode_ in [0.2, 0.4, 0.6, 0.8]:
-        # x, ctx, presence, extra_cond = self.generate_context(my_little_datapoint, self.max_levels_length, "val", mode_, deterministic=True)
-        presence = my_little_datapoint[..., 0] > 0.7
-
-        for _ in range(n_completions):
-            x = my_little_datapoint.clone()
-            x = torch.where(presence[..., None], x, torch.randn_like(x))
-            ctx = my_little_datapoint.clone()
-            ctx = torch.where(presence[..., None], torch.zeros_like(ctx), ctx)
-            extra_cond = None
-
-            ctxs.append(ctx)
-            presences.append(presence)
-            xs.append(x)
-
-        ctxs = torch.cat(ctxs)
-        presences = torch.cat(presences)
-        x = torch.cat(xs)
-
-        fake, confidence = sampling_fn(ctxs, class_, presences, x=x, extra_cond=extra_cond)
-        fake = self.unnormalize(fake)
-
-        fakes = []
-        ctxs__ = []
-        for i in range(n_completions):
-            fake_ = fake[i].clone()
-            fake_ = torch.where(presences[i][..., None], fake_, self.unnormalize(ctxs[i]))
-            fakes.append(fake_)
-
-            ctx_ = ctxs[i].clone()
-            ctx_ = self.unnormalize(ctx_)
-            ctx_ = torch.where(presences[i][..., None], torch.zeros_like(ctx_), ctx_)
-            ctxs__.append(ctx_)
-        rendered_fake = [big_renderer.draw_on_canvas(fakes[i].unsqueeze(0) + 1e-3, "white", False).squeeze() for i in range(n_completions)]
-        rendered_ctx = [big_renderer.draw_on_canvas(ctxs__[i].unsqueeze(0) + 1e-3, "white", False).squeeze() for i in range(n_completions)]
-
-        for i in range(n_completions):
-            save_image([rendered_ctx[i], rendered_fake[i]], os.path.join(pred_out_root, f"{file_basename}_{i}.png"))
-
-        return None
-
-    def predict_step_no_class(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        # ctx_out_root = "/data/shared/ndallasen/datasets/inp/awesome-animals-complete/teaser-ctx/"
-        pred_out_root = "supp_mat/no_class"
-        # os.makedirs(ctx_out_root, exist_ok=True)
-        os.makedirs(pred_out_root, exist_ok=True)
-
-
-        big_renderer, my_little_datapoint, class_, file_basename = self.load_datapoint(batch)
-
-        sampling_fn = self.diffusion.available_samplers()[0]
-
-        n_completions = 4
-        class_[0, 0] = 10
-
-        ctxs = []
-        class_ = class_.repeat(n_completions, 1)
-        presences = []
-        xs = []
-
-        # for mode_ in [0.2, 0.4, 0.6, 0.8]:
-        # x, ctx, presence, extra_cond = self.generate_context(my_little_datapoint, self.max_levels_length, "val", mode_, deterministic=True)
-        presence = my_little_datapoint[..., 0] > 0.7
-
-        for idx, mode in enumerate(self.modes[:n_completions]):
-            x, ctx, presence, extra_cond = self.generate_context(my_little_datapoint, self.max_levels_length, "val", mode, deterministic=True)
-
-            ctxs.append(ctx)
-            presences.append(presence)
-            xs.append(x)
-
-        ctxs = torch.cat(ctxs)
-        presences = torch.cat(presences)
-        x = torch.cat(xs)
-
-        fake, confidence = sampling_fn(ctxs, class_, presences, x=x, extra_cond=None)
-        fake = self.unnormalize(fake)
-
-        fakes = []
-        ctxs__ = []
-        for i, _ in enumerate(self.modes[:n_completions]):
-            fake_ = fake[i].clone()
-            fake_ = torch.where(presences[i][..., None], fake_, self.unnormalize(ctxs[i]))
-            fakes.append(fake_)
-
-            ctx_ = ctxs[i].clone()
-            ctx_ = self.unnormalize(ctx_)
-            ctx_ = torch.where(presences[i][..., None], torch.zeros_like(ctx_), ctx_)
-            ctxs__.append(ctx_)
-
-        rendered_fake = [big_renderer.draw_on_canvas(fakes[i].unsqueeze(0) + 1e-3, "white", False).squeeze() for i in range(n_completions)]
-        rendered_ctx = [big_renderer.draw_on_canvas(ctxs__[i].unsqueeze(0) + 1e-3, "white", False).squeeze() for i in range(n_completions)]
-
-        for i, mode in enumerate(self.modes[:n_completions]):
-            save_image([rendered_ctx[i], rendered_fake[i]], os.path.join(pred_out_root, f"{file_basename}_{mode}.png"))
-
-        return None
-
-    def predict_step_lots(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        # ctx_out_root = "/data/shared/ndallasen/datasets/inp/awesome-animals-complete/teaser-ctx/"
-        pred_out_root = "supp_mat/lots"
-        # os.makedirs(ctx_out_root, exist_ok=True)
-        os.makedirs(pred_out_root, exist_ok=True)
-
-
-        big_renderer, my_little_datapoint, class_, file_basename = self.load_datapoint(batch)
-
-        sampling_fn = self.diffusion.available_samplers()[0]
-
-        n_completions = 5
-        # class_[0, 0] = 10
-
-        ctxs = []
-        class_ = class_.repeat(n_completions, 1)
-        presences = []
-        xs = []
-
-        # for mode_ in [0.2, 0.4, 0.6, 0.8]:
-        # x, ctx, presence, extra_cond = self.generate_context(my_little_datapoint, self.max_levels_length, "val", mode_, deterministic=True)
-        # presence = my_little_datapoint[..., 0] > 0.7
-
-        for idx, mode in enumerate(self.modes[:n_completions]):
-            x, ctx, presence, extra_cond = self.generate_context(my_little_datapoint, self.max_levels_length, "val", mode, deterministic=True)
-
-            ctxs.append(ctx)
-            presences.append(presence)
-            xs.append(x)
-
-        ctxs = torch.cat(ctxs)
-        presences = torch.cat(presences)
-        x = torch.cat(xs)
-
-        fake, confidence = sampling_fn(ctxs, class_, presences, x=x, extra_cond=None)
-        fake = self.unnormalize(fake)
-
-        fakes = []
-        ctxs__ = []
-        for i, _ in enumerate(self.modes[:n_completions]):
-            fake_ = fake[i].clone()
-            fake_ = torch.where(presences[i][..., None], fake_, self.unnormalize(ctxs[i]))
-            fakes.append(fake_)
-
-            ctx_ = ctxs[i].clone()
-            ctx_ = self.unnormalize(ctx_)
-            ctx_ = torch.where(presences[i][..., None], torch.zeros_like(ctx_), ctx_)
-            ctxs__.append(ctx_)
-
-        rendered_fake = [big_renderer.draw_on_canvas(fakes[i].unsqueeze(0) + 1e-3, "white", False).squeeze() for i in range(n_completions)]
-        rendered_ctx = [big_renderer.draw_on_canvas(ctxs__[i].unsqueeze(0) + 1e-3, "white", False).squeeze() for i in range(n_completions)]
-
-        for i, mode in enumerate(self.modes[:n_completions]):
-            save_image([rendered_ctx[i], rendered_fake[i]], os.path.join(pred_out_root, f"{file_basename}_{mode}.png"))
-
-        return None
-
-    def predict_step_noising_viz(self, batch: Any, batch_idx: int, dataloader_idx: int = 0) -> Any:
-        # ctx_out_root = "/data/shared/ndallasen/datasets/inp/awesome-animals-complete/teaser-ctx/"
-        pred_out_root = "supp_mat/noising_viz"
-        # os.makedirs(ctx_out_root, exist_ok=True)
-        os.makedirs(pred_out_root, exist_ok=True)
-
-
-        big_renderer, my_little_datapoint, class_, file_basename = self.load_datapoint(batch)
-
-        sampling_fn = self.diffusion.available_samplers()[0]
-
-        n_completions = 4
-        # class_[0, 0] = 10
-
-        ctxs = []
-        class_ = class_.repeat(n_completions, 1)
-        presences = []
-        xs = []
-
-        # for mode_ in [0.2, 0.4, 0.6, 0.8]:
-        # x, ctx, presence, extra_cond = self.generate_context(my_little_datapoint, self.max_levels_length, "val", mode_, deterministic=True)
-        # presence = my_little_datapoint[..., 0] > 0.7
-
-        for idx, mode in enumerate(self.modes[:n_completions]):
-            x, ctx, presence, extra_cond = self.generate_context(my_little_datapoint, self.max_levels_length, "val", mode, deterministic=True)
-            times = torch.linspace(0, 1, n_completions).to(x.device)
-            x, _ = self.diffusion.q_sample(x, times)
-
-            ctxs.append(ctx)
-            presences.append(presence)
-            xs.append(x)
-
-        ctxs = torch.cat(ctxs)
-        presences = torch.cat(presences)
-        x = torch.cat(xs)
-
-        # fake, confidence = sampling_fn(ctxs, class_, presences, x=x, extra_cond=None)
-        # fake = self.unnormalize(fake)
-
-        fakes = []
-        ctxs__ = []
-        for i, _ in enumerate(self.modes[:n_completions]):
-            fake_ = x[i].clone()
-            fake_ = torch.where(presences[i][..., None], fake_, self.unnormalize(ctxs[i]))
-            fakes.append(fake_)
-
-            ctx_ = ctxs[i].clone()
-            ctx_ = self.unnormalize(ctx_)
-            ctx_ = torch.where(presences[i][..., None], torch.zeros_like(ctx_), ctx_)
-            ctxs__.append(ctx_)
-
-        rendered_fake = [big_renderer.draw_on_canvas(fakes[i].unsqueeze(0) + 1e-3, "white", False).squeeze() for i in range(n_completions)]
-        rendered_ctx = [big_renderer.draw_on_canvas(ctxs__[i].unsqueeze(0) + 1e-3, "white", False).squeeze() for i in range(n_completions)]
-
-        for i, mode in enumerate(self.modes[:n_completions]):
-            save_image([rendered_ctx[i], rendered_fake[i]], os.path.join(pred_out_root, f"{file_basename}_{mode}.png"))
-
-        return None
-
-
-    @staticmethod
-    def animate_seq(strokes, big_renderer, filename):
-        to_pil = ToPILImage()
-
-        frames = big_renderer.draw_on_canvas(strokes + 1e-3, "black", True)
-        frames = [to_pil(frame) for frame in frames]
-
-        # create a gif with moviepy out of the frames
-        frames = [np.array(frame) for frame in frames]
-        clip = mpy.ImageSequenceClip(frames, fps=30)
-        clip.write_videofile(filename, fps=30)
-        # clip.write_gif(filename, fps=60)
-
-        return None
 
     def configure_optimizers(self):
         """Choose what optimizers and learning-rate schedulers to use in your optimization.
