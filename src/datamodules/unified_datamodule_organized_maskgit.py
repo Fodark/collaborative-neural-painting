@@ -162,13 +162,10 @@ class MyDataset(Dataset):
                 dim=0,
             )
             masks = torch.ones(self.max_levels_length[0], dtype=torch.bool)
-        # padded_data, masks = self.pad_data(data, levels_length)
         padded_data *= 255
         padded_data = padded_data.long()
         padded_data = rearrange(padded_data, "t c -> (t c)")
 
-        # log the range of padded data
-        # log.info(f"padded_data: {padded_data.min()} - {padded_data.max()}")
 
         return {
             "data": padded_data,

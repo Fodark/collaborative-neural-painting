@@ -31,9 +31,7 @@ class MyDataset(Dataset):
         root_dir = data_dir.split(dataset_name)[0]
 
         metadata_path = os.path.join(root_dir, "metadata", f"{dataset_name}.json")
-        # assert os.path.exists(metadata_path), f"Metadata file not found at {metadata_path}"
         if os.path.exists(metadata_path):
-            # log.info(f"Loading metadata from {metadata_path}")
             with open(metadata_path, "r") as f:
                 self.metadata: Dict[str, List[int]] = json.load(f)
         else:
@@ -42,7 +40,6 @@ class MyDataset(Dataset):
 
         self.max_levels_length = max_levels_length
 
-        # self.limit_data = limit_data
         self.classes = classes
         self._indices = []
         self.classes_names = []
@@ -168,11 +165,7 @@ class MyDataset(Dataset):
                 dim=0,
             )
             masks = torch.ones(self.max_levels_length[0], dtype=torch.bool)
-        # padded_data, masks = self.pad_data(data, levels_length)
         padded_data = (padded_data - 0.5) * self.scale
-
-        # log the range of padded data
-        # log.info(f"padded_data: {padded_data.min()} - {padded_data.max()}")
 
         return {
             "data": padded_data,
