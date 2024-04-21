@@ -200,10 +200,8 @@ class BidirectionalTransformer(nn.Module):
             nn.Parameter(torch.zeros(self.max_seq_len, hidden_size * 8)), 0.0, 0.02
         )
         self.y_embedder = LabelEmbedder(num_classes, hidden_size, class_dropout_prob)
-        # self.register_buffer("pos_emb", nn.init.trunc_normal_(nn.Parameter(torch.zeros(1024, args.dim)), 0., 0.02))
         self.x_projecter = nn.Linear(8 * hidden_size, hidden_size)
         self.blocks = nn.Sequential(*[DiTBlock(hidden_size, num_heads) for _ in range(n_layers)])
-        # self.proj = nn.Linear(hidden_size, hidden_size * 8)
         self.proj = nn.ModuleList(
             [
                 nn.Linear(hidden_size, hidden_size),
@@ -228,16 +226,13 @@ class BidirectionalTransformer(nn.Module):
         self.apply(weights_init)
 
     def forward(self, x, y):
-        # print(f"max tokens: {x.max()}")
         token_embeddings = self.tok_emb(x)
         token_embeddings = rearrange(token_embeddings, "b (l f) d -> b l (f d)", f=8)
-        # print(token_embeddings.shape)
         # exit(1)
         t = token_embeddings.shape[1]
         position_embeddings = self.pos_emb[:t, :]
         y = y.squeeze(-1)
         y = self.y_embedder(y, self.training)  # (N, D)
-        # position_embeddings = self.pos_emb(x)
         embed = self.drop(self.ln(token_embeddings + position_embeddings))
         embed = self.x_projecter(embed)
         for block in self.blocks:
@@ -248,11 +243,8 @@ class BidirectionalTransformer(nn.Module):
         for i in range(len(embeds)):
             embeds[i] = self.Token_Prediction[i](embeds[i])
         embed = torch.cat(embeds, dim=1)
-        # embed = torch.cat(embeds, dim=-1)
-        # embed = self.Token_Prediction(embed)
-        # embed = rearrange(embed, "b l (h p) -> b (l p) h", p=8)
         logits = torch.matmul(embed, self.tok_emb.weight.T) + self.bias
-        # print(logits.shape)
+
         return logits
 
 
@@ -260,9 +252,6 @@ if __name__ == "__main__":
     model = BidirectionalTransformer(
         hidden_size=(768 // 2), n_layers=6, num_heads=8, max_seq_len=1440, max_tokens=256
     )
-    # print(
-    #     f"Number of parameters: {sum(p.numel() for p in model.parameters() if p.requires_grad) / 1e6:.2f}M"
-    # )
     from prettytable import PrettyTable
     from fvcore.nn import FlopCountAnalysis
 
@@ -284,12 +273,8 @@ if __name__ == "__main__":
     count_parameters(model)
     x = torch.randint(0, 257, (b, 1440))
     y = torch.randint(0, 10, (b, 1))
-    # ctx = torch.randn(1, 512, 8)
 
     macs_analysis = FlopCountAnalysis(model, (x, y))
     macs = macs_analysis.total() / b
     flops = macs * 2
     print(f"FLOPs: {flops / 1e9:.3f}G")
-
-    # logits = model(x, y)
-    # print(logits.shape)

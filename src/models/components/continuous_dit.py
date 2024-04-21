@@ -541,27 +541,6 @@ def get_1d_sincos_pos_embed_from_grid(embed_dim, pos):
     return emb
 
 
-#################################################################################
-#                                   DiT Configs                                  #
-#################################################################################
-
-
-def DiT_XL(**kwargs):
-    return DiT(depth=28, hidden_size=1152, num_heads=16, **kwargs)
-
-
-def DiT_L(**kwargs):
-    return DiT(depth=24, hidden_size=1024, num_heads=16, **kwargs)
-
-
-def DiT_B(**kwargs):
-    return DiT(depth=12, hidden_size=768, num_heads=12, **kwargs)
-
-
-def DiT_S(**kwargs):
-    return DiT(depth=12, hidden_size=384, num_heads=6, **kwargs)
-
-
 if __name__ == "__main__":
     from prettytable import PrettyTable
     from fvcore.nn import FlopCountAnalysis
@@ -585,12 +564,6 @@ if __name__ == "__main__":
     t = torch.randint(0, 10, (b,))
     c = torch.randint(0, 10, (b,))
 
-    # model = DiT_S(num_classes=10, max_seq_len=T, use_fourier=True)
-    # print(
-    #     "params:",
-    #     sum(p.numel() for p in model.parameters() if p.requires_grad) / 1e6,
-    #     "M",
-    # )
     model = CDiT(
         hidden_size=576,
         depth=6,
@@ -606,9 +579,3 @@ if __name__ == "__main__":
     macs = macs_analysis.total() / b
     flops = macs * 2
     print(f"FLOPs: {flops / 1e9:.3f}G")
-
-    # output = model(x, ctx, t, c)
-    # mean, std = output.chunk(2, dim=-1)
-    # print(output.shape)
-    # print(mean.shape)
-    # print(std.shape)
