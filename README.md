@@ -53,9 +53,7 @@ python src/train.py experiment={bert,maskgit,mdt,continuous_t}
 @article{dallasen2023collaborative,
   title={Collaborative Neural Painting}, 
   author={Nicola Dall'Asen and Willi Menapace and Elia Peruzzo and Enver Sangineto and Yiming Wang and Elisa Ricci},
-  year={2023},
-  eprint={2312.01800},
-  archivePrefix={arXiv},
-  primaryClass={cs.CV}
+  year={2025},
+  booktitle={Computer Vision and Image Understanding}
 }
 ```
